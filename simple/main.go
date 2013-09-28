@@ -46,4 +46,10 @@ func main() {
   example6 := simple.Sequence{simple.Assign{"x",simple.Add{simple.Number{1},simple.Number{1}}},simple.Assign{"y",simple.Add{simple.Variable{"x"},simple.Number{3}}}}
   machine = simple.Machine{example6,env}
   machine.Run()
+
+  fmt.Println("\nWhile Loop")
+  env = simple.Env{"x":simple.Number{1}}
+  example7 := simple.While{simple.LessThan{simple.Variable{"x"},simple.Number{5}},simple.Assign{"x",simple.Multiply{simple.Variable{"x"},simple.Number{3}}}}
+  machine = simple.Machine{example7,env}
+  machine.Run()
 }

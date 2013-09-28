@@ -293,3 +293,25 @@ func (self Sequence) Reduce(e Env) (Node, Env) {
     return Sequence{r_first, self.Second}, r_env
   }
 }
+
+/* While */
+type While struct {
+  Condition Node
+  Body Node
+}
+
+func (self While) String() string {
+  return fmt.Sprintf("while (%v) { %v }", self.Condition, self.Body)
+}
+
+func (self While) Inspect() string {
+  return fmt.Sprintf("≪%v≫", self)
+}
+
+func (self While) Reduceable() bool {
+  return true
+}
+
+func (self While) Reduce(e Env) (Node, Env) {
+  return If{self.Condition,Sequence{self.Body,self},DoNothing{}}, e
+}
