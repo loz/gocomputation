@@ -266,3 +266,30 @@ func (self If) Reduce(e Env) (Node, Env) {
     }
   }
 }
+
+/* Sequence */
+type Sequence struct {
+  First Node
+  Second Node
+}
+
+func (self Sequence) String() string {
+  return fmt.Sprintf("%v; %v", self.First, self.Second)
+}
+
+func (self Sequence) Inspect() string {
+  return fmt.Sprintf("≪%v≫", self)
+}
+
+func (self Sequence) Reduceable() bool {
+  return true
+}
+
+func (self Sequence) Reduce(e Env) (Node, Env) {
+  if self.First == (DoNothing{}) {
+    return self.Second, e
+  } else {
+    r_first, r_env := self.First.Reduce(e)
+    return Sequence{r_first, self.Second}, r_env
+  }
+}

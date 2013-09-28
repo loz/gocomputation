@@ -40,4 +40,10 @@ func main() {
   env = simple.Env {"x":simple.Boolean{false}}
   machine = simple.Machine{example5,env}
   machine.Run()
+
+  fmt.Println("\nSequences")
+  env = simple.Env{}
+  example6 := simple.Sequence{simple.Assign{"x",simple.Add{simple.Number{1},simple.Number{1}}},simple.Assign{"y",simple.Add{simple.Variable{"x"},simple.Number{3}}}}
+  machine = simple.Machine{example6,env}
+  machine.Run()
 }
