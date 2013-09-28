@@ -10,6 +10,22 @@ type Node interface {
   Inspect() string
 }
 
+/* Machine */
+type Machine struct {
+  Expression Node
+}
+
+func (self *Machine) Step() {
+  self.Expression = self.Expression.Reduce()
+}
+
+func (self *Machine) Run() {
+  for self.Expression.Reduceable() {
+    fmt.Println(self.Expression)
+    self.Step()
+  }
+  fmt.Println(self.Expression)
+}
 
 /* Number */
 type Number struct {
