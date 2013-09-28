@@ -16,6 +16,7 @@ func main() {
   machine.Run()
   eval, eval_env := example1.Evaluate(env)
   fmt.Println("Evaluated:", eval.Inspect(), eval_env)
+  fmt.Printf("Ruby\n----\n%s\n----\n", example1.ToRuby())
 
   fmt.Println("\nBooleans")
   example2 := simple.LessThan{simple.Number{5}, simple.Add{simple.Number{2},simple.Number{2}}}
@@ -23,6 +24,7 @@ func main() {
   machine.Run()
   eval, eval_env = example2.Evaluate(env)
   fmt.Println("Evaluated:", eval.Inspect(), eval_env)
+  fmt.Printf("Ruby\n----\n%s\n----\n", example2.ToRuby())
 
   fmt.Println("\nVariables")
   env = simple.Env {"x":simple.Number{3}, "y":simple.Number{4}}
@@ -32,6 +34,7 @@ func main() {
   env = simple.Env {"x":simple.Number{3}, "y":simple.Number{4}}
   eval, eval_env = example3.Evaluate(env)
   fmt.Println("Evaluated:", eval.Inspect(), eval_env)
+  fmt.Printf("Ruby\n----\n%s\n----\n", example3.ToRuby())
 
   fmt.Println("\nAssignment")
   env = simple.Env {"x":simple.Number{2}}
@@ -41,6 +44,7 @@ func main() {
   env = simple.Env {"x":simple.Number{2}}
   eval, eval_env = example4.Evaluate(env)
   fmt.Println("Evaluated:", eval.Inspect(), eval_env)
+  fmt.Printf("Ruby\n----\n%s\n----\n", example4.ToRuby())
 
   fmt.Println("\nConditional")
   env = simple.Env {"x":simple.Boolean{true}}
@@ -57,6 +61,7 @@ func main() {
   env = simple.Env {"x":simple.Boolean{false}}
   eval, eval_env = example5.Evaluate(env)
   fmt.Println("Evaluated:", eval.Inspect(), eval_env)
+  fmt.Printf("Ruby\n----\n%s\n----\n", example5.ToRuby())
 
   fmt.Println("\nSequences")
   env = simple.Env{}
@@ -66,6 +71,7 @@ func main() {
   env = simple.Env{}
   eval, eval_env = example6.Evaluate(env)
   fmt.Println("Evaluated:", eval.Inspect(), eval_env)
+  fmt.Printf("Ruby\n----\n%s\n----\n", example6.ToRuby())
 
   fmt.Println("\nWhile Loop")
   env = simple.Env{"x":simple.Number{1}}
@@ -75,4 +81,5 @@ func main() {
   env = simple.Env{"x":simple.Number{1}}
   eval, eval_env = example7.Evaluate(env)
   fmt.Println("Evaluated:", eval.Inspect(), eval_env)
+  fmt.Printf("Ruby\n----\n%s\n----\n", example7.ToRuby())
 }

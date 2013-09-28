@@ -11,6 +11,7 @@ type Node interface {
   Reduce(Env) (Node, Env)
   Inspect() string
   Evaluate(Env) (Node, Env)
+  ToRuby() string
 }
 
 /* Machine */
@@ -56,6 +57,11 @@ func (self Number) Evaluate(e Env) (Node, Env) {
   return self, e
 }
 
+func (self Number) ToRuby() string {
+  return fmt.Sprintf("-> e { %v }", self.Value)
+}
+
+
 /* Boolean */
 type Boolean struct {
   Value bool
@@ -79,6 +85,10 @@ func (self Boolean) Reduce(e Env) (Node, Env) {
 
 func (self Boolean) Evaluate(e Env) (Node, Env) {
   return self, e
+}
+
+func (self Boolean) ToRuby() string {
+  return fmt.Sprintf("-> e { %v }", self.Value)
 }
 
 /* Add */
@@ -117,6 +127,10 @@ func (self Add) Evaluate(e Env) (Node, Env) {
   return Number{(le.(Number).Value + re.(Number).Value)}, e
 }
 
+func (self Add) ToRuby() string {
+  return fmt.Sprintf("-> e { (%s).call(e) + (%s).call(e) }", self.Left.ToRuby(), self.Right.ToRuby())
+}
+
 /* Multiply */
 type Multiply struct {
   Left Node
@@ -151,6 +165,10 @@ func (self Multiply) Evaluate(e Env) (Node, Env) {
   le, _ := self.Left.Evaluate(e)
   re, _ := self.Right.Evaluate(e)
   return Number{(le.(Number).Value * re.(Number).Value)}, e
+}
+
+func (self Multiply) ToRuby() string {
+  return fmt.Sprintf("-> e { (%s).call(e) * (%s).call(e) }", self.Left.ToRuby(), self.Right.ToRuby())
 }
 
 /* LessThan */
@@ -189,6 +207,10 @@ func (self LessThan) Evaluate(e Env) (Node, Env) {
   return Boolean{(le.(Number).Value < re.(Number).Value)}, e
 }
 
+func (self LessThan) ToRuby() string {
+  return fmt.Sprintf("-> e { (%s).call(e) < (%s).call(e) }", self.Left.ToRuby(), self.Right.ToRuby())
+}
+
 /* Variable */
 type Variable struct {
   Name string
@@ -212,6 +234,10 @@ func (self Variable) Reduce(environment Env) (Node, Env) {
 
 func (self Variable) Evaluate(e Env) (Node, Env) {
   return e[self.Name], e
+}
+
+func (self Variable) ToRuby() string {
+  return fmt.Sprintf("-> e { e['%s'] }", self.Name)
 }
 
 /* Statements */
@@ -238,6 +264,10 @@ func (self DoNothing) Reduce(e Env) (Node, Env) {
 
 func (self DoNothing) Evaluate(e Env) (Node, Env) {
   return self, e
+}
+
+func (self DoNothing) ToRuby() string {
+  return "-> e { e }"
 }
 
 /* Assign */
@@ -271,6 +301,10 @@ func (self Assign) Reduce(e Env) (Node, Env) {
 func (self Assign) Evaluate(e Env) (Node, Env) {
   e[self.Name], _ = self.Expression.Evaluate(e)
   return self, e
+}
+
+func (self Assign) ToRuby() string {
+  return fmt.Sprintf("-> e { e.merge({'%s' => (%s).call(e)}) }", self.Name, self.Expression.ToRuby())
 }
 
 /* If */
@@ -316,6 +350,13 @@ func (self If) Evaluate(e Env) (Node, Env) {
   }
 }
 
+func (self If) ToRuby() string {
+  return fmt.Sprintf("-> e { if (%s).call(e) then (%s).call(e) else (%s).call(e) end }",
+                          self.Condition.ToRuby(),
+                          self.Consequence.ToRuby(),
+                          self.Alternative.ToRuby())
+}
+
 /* Sequence */
 type Sequence struct {
   First Node
@@ -348,6 +389,12 @@ func (self Sequence) Evaluate(e Env) (Node, Env) {
   return self.Second.Evaluate(new_env)
 }
 
+func (self Sequence) ToRuby() string {
+  return fmt.Sprintf("-> e { (%s).call((%s).call(e)) }",
+                          self.Second.ToRuby(),
+                          self.First.ToRuby())
+}
+
 /* While */
 type While struct {
   Condition Node
@@ -378,4 +425,10 @@ func (self While) Evaluate(e Env) (Node, Env) {
   } else {
     return self, e
   }
+}
+
+func (self While) ToRuby() string {
+  return fmt.Sprintf("-> e { while (%s).call(e); e = (%s).call(e); end; e }",
+                          self.Condition.ToRuby(),
+                          self.Body.ToRuby())
 }
