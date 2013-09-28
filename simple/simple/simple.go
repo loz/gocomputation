@@ -8,7 +8,7 @@ type Env map[string]Node
 
 type Node interface {
   Reduceable() bool
-  Reduce(Env) Node
+  Reduce(Env) (Node, Env)
   Inspect() string
 }
 
@@ -19,15 +19,15 @@ type Machine struct {
 }
 
 func (self *Machine) Step() {
-  self.Expression = self.Expression.Reduce(self.Environment)
+  self.Expression, self.Environment = self.Expression.Reduce(self.Environment)
 }
 
 func (self *Machine) Run() {
   for self.Expression.Reduceable() {
-    fmt.Println(self.Expression)
+    fmt.Printf("%v, %v\n", self.Expression, self.Environment)
     self.Step()
   }
-  fmt.Println(self.Expression)
+  fmt.Printf("%v, %v\n", self.Expression, self.Environment)
 }
 
 /* Number */
@@ -47,8 +47,8 @@ func (self Number) Reduceable() bool {
   return false
 }
 
-func (self Number) Reduce(e Env) Node {
-  return self
+func (self Number) Reduce(e Env) (Node, Env) {
+  return self, e
 }
 
 /* Boolean */
@@ -68,8 +68,8 @@ func (self Boolean) Reduceable() bool {
   return false
 }
 
-func (self Boolean) Reduce(e Env) Node {
-  return self
+func (self Boolean) Reduce(e Env) (Node, Env) {
+  return self, e
 }
 
 /* Add */
@@ -90,13 +90,15 @@ func (self Add) Reduceable() bool {
   return true
 }
 
-func (self Add) Reduce(e Env) Node {
+func (self Add) Reduce(e Env) (Node, Env) {
   if self.Left.Reduceable() {
-    return Add{(self.Left.Reduce(e)), self.Right}
+    l, _ := self.Left.Reduce(e)
+    return Add{l, self.Right}, e
   } else if self.Right.Reduceable() {
-    return Add{self.Left, self.Right.Reduce(e)}
+    r, _ := self.Right.Reduce(e)
+    return Add{self.Left, r}, e
   } else {
-    return Number{(self.Left.(Number).Value + self.Right.(Number).Value)}
+    return Number{(self.Left.(Number).Value + self.Right.(Number).Value)}, e
   }
 }
 
@@ -118,13 +120,15 @@ func (self Multiply) Reduceable() bool {
   return true
 }
 
-func (self Multiply) Reduce(e Env) Node {
+func (self Multiply) Reduce(e Env) (Node, Env) {
   if self.Left.Reduceable() {
-    return Multiply{(self.Left.Reduce(e)), self.Right}
+    l, _ := self.Left.Reduce(e)
+    return Multiply{l, self.Right}, e
   } else if self.Right.Reduceable() {
-    return Multiply{self.Left, self.Right.Reduce(e)}
+    r, _ := self.Right.Reduce(e)
+    return Multiply{self.Left, r}, e
   } else {
-    return Number{(self.Left.(Number).Value * self.Right.(Number).Value)}
+    return Number{(self.Left.(Number).Value * self.Right.(Number).Value)}, e
   }
 }
 
@@ -146,13 +150,15 @@ func (self LessThan) Reduceable() bool {
   return true
 }
 
-func (self LessThan) Reduce(e Env) Node {
+func (self LessThan) Reduce(e Env) (Node, Env) {
   if self.Left.Reduceable() {
-    return LessThan{(self.Left.Reduce(e)), self.Right}
+    l, _ := self.Left.Reduce(e)
+    return LessThan{l, self.Right}, e
   } else if self.Right.Reduceable() {
-    return LessThan{self.Left, self.Right.Reduce(e)}
+    r, _ := self.Right.Reduce(e)
+    return LessThan{self.Left, r}, e
   } else {
-    return Boolean{(self.Left.(Number).Value < self.Right.(Number).Value)}
+    return Boolean{(self.Left.(Number).Value < self.Right.(Number).Value)}, e
   }
 }
 
@@ -173,6 +179,56 @@ func (self Variable) Reduceable() bool {
   return true
 }
 
-func (self Variable) Reduce(environment Env) Node {
-  return environment[self.Name]
+func (self Variable) Reduce(environment Env) (Node, Env) {
+  return environment[self.Name], environment
+}
+
+/* Statements */
+/******************/
+
+/* DoNothing */
+type DoNothing struct {}
+
+func (self DoNothing) String() string {
+  return "do-nothing"
+}
+
+func (self DoNothing) Inspect() string {
+  return fmt.Sprintf("≪%v≫", self)
+}
+
+func (self DoNothing) Reduceable() bool {
+  return false
+}
+
+func (self DoNothing) Reduce(e Env) (Node, Env) {
+  return self, e
+}
+
+/* Assign */
+type Assign struct {
+  Name string
+  Expression Node
+}
+
+func (self Assign) String() string {
+  return fmt.Sprintf("%v = %v", self.Name, self.Expression)
+}
+
+func (self Assign) Inspect() string {
+  return fmt.Sprintf("≪%v≫", self)
+}
+
+func (self Assign) Reduceable() bool {
+  return true
+}
+
+func (self Assign) Reduce(e Env) (Node, Env) {
+  if self.Expression.Reduceable() {
+    exp, _ := self.Expression.Reduce(e)
+    return Assign{self.Name, exp}, e
+  } else {
+    e[self.Name] = self.Expression
+    return DoNothing{}, e
+  }
 }

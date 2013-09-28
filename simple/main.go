@@ -25,4 +25,10 @@ func main() {
   example3 := simple.Add{simple.Variable{"x"},simple.Variable{"y"}}
   machine = simple.Machine{example3,env}
   machine.Run()
+
+  fmt.Println("\nAssignment")
+  env = simple.Env {"x":simple.Number{2}}
+  example4 := simple.Assign{"x",simple.Add{simple.Variable{"x"},simple.Number{1}}}
+  machine = simple.Machine{example4,env}
+  machine.Run()
 }
