@@ -232,3 +232,37 @@ func (self Assign) Reduce(e Env) (Node, Env) {
     return DoNothing{}, e
   }
 }
+
+/* If */
+type If struct {
+  Condition Node
+  Consequence Node
+  Alternative Node
+}
+
+func (self If) String() string {
+  return fmt.Sprintf("if (%v) { %v } else { %v }",
+                      self.Condition, self.Consequence,
+                      self.Alternative)
+}
+
+func (self If) Inspect() string {
+  return fmt.Sprintf("≪%v≫", self)
+}
+
+func (self If) Reduceable() bool {
+  return true
+}
+
+func (self If) Reduce(e Env) (Node, Env) {
+  if self.Condition.Reduceable() {
+    cond, _ := self.Condition.Reduce(e)
+    return If{cond, self.Consequence, self.Alternative}, e
+  } else {
+    if self.Condition == (Boolean{true}) {
+      return self.Consequence, e
+    } else {
+      return self.Alternative, e
+    }
+  }
+}

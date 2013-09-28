@@ -31,4 +31,13 @@ func main() {
   example4 := simple.Assign{"x",simple.Add{simple.Variable{"x"},simple.Number{1}}}
   machine = simple.Machine{example4,env}
   machine.Run()
+
+  fmt.Println("\nConditional")
+  env = simple.Env {"x":simple.Boolean{true}}
+  example5 := simple.If{simple.Variable{"x"},simple.Assign{"y",simple.Number{1}},simple.Assign{"y",simple.Number{2}}}
+  machine = simple.Machine{example5,env}
+  machine.Run()
+  env = simple.Env {"x":simple.Boolean{false}}
+  machine = simple.Machine{example5,env}
+  machine.Run()
 }
