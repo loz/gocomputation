@@ -10,6 +10,7 @@ type Node interface {
   Reduceable() bool
   Reduce(Env) (Node, Env)
   Inspect() string
+  Evaluate(Env) (Node, Env)
 }
 
 /* Machine */
@@ -51,6 +52,10 @@ func (self Number) Reduce(e Env) (Node, Env) {
   return self, e
 }
 
+func (self Number) Evaluate(e Env) (Node, Env) {
+  return self, e
+}
+
 /* Boolean */
 type Boolean struct {
   Value bool
@@ -69,6 +74,10 @@ func (self Boolean) Reduceable() bool {
 }
 
 func (self Boolean) Reduce(e Env) (Node, Env) {
+  return self, e
+}
+
+func (self Boolean) Evaluate(e Env) (Node, Env) {
   return self, e
 }
 
@@ -102,6 +111,12 @@ func (self Add) Reduce(e Env) (Node, Env) {
   }
 }
 
+func (self Add) Evaluate(e Env) (Node, Env) {
+  le, _ := self.Left.Evaluate(e)
+  re, _ := self.Right.Evaluate(e)
+  return Number{(le.(Number).Value + re.(Number).Value)}, e
+}
+
 /* Multiply */
 type Multiply struct {
   Left Node
@@ -130,6 +145,12 @@ func (self Multiply) Reduce(e Env) (Node, Env) {
   } else {
     return Number{(self.Left.(Number).Value * self.Right.(Number).Value)}, e
   }
+}
+
+func (self Multiply) Evaluate(e Env) (Node, Env) {
+  le, _ := self.Left.Evaluate(e)
+  re, _ := self.Right.Evaluate(e)
+  return Number{(le.(Number).Value * re.(Number).Value)}, e
 }
 
 /* LessThan */
@@ -162,6 +183,12 @@ func (self LessThan) Reduce(e Env) (Node, Env) {
   }
 }
 
+func (self LessThan) Evaluate(e Env) (Node, Env) {
+  le, _ := self.Left.Evaluate(e)
+  re, _ := self.Right.Evaluate(e)
+  return Boolean{(le.(Number).Value < re.(Number).Value)}, e
+}
+
 /* Variable */
 type Variable struct {
   Name string
@@ -183,6 +210,10 @@ func (self Variable) Reduce(environment Env) (Node, Env) {
   return environment[self.Name], environment
 }
 
+func (self Variable) Evaluate(e Env) (Node, Env) {
+  return e[self.Name], e
+}
+
 /* Statements */
 /******************/
 
@@ -202,6 +233,10 @@ func (self DoNothing) Reduceable() bool {
 }
 
 func (self DoNothing) Reduce(e Env) (Node, Env) {
+  return self, e
+}
+
+func (self DoNothing) Evaluate(e Env) (Node, Env) {
   return self, e
 }
 
@@ -231,6 +266,11 @@ func (self Assign) Reduce(e Env) (Node, Env) {
     e[self.Name] = self.Expression
     return DoNothing{}, e
   }
+}
+
+func (self Assign) Evaluate(e Env) (Node, Env) {
+  e[self.Name], _ = self.Expression.Evaluate(e)
+  return self, e
 }
 
 /* If */
@@ -267,6 +307,15 @@ func (self If) Reduce(e Env) (Node, Env) {
   }
 }
 
+func (self If) Evaluate(e Env) (Node, Env) {
+  con, _ := self.Condition.Evaluate(e)
+  if con == (Boolean{true}) {
+    return self.Consequence.Evaluate(e)
+  } else {
+    return self.Alternative.Evaluate(e)
+  }
+}
+
 /* Sequence */
 type Sequence struct {
   First Node
@@ -294,6 +343,11 @@ func (self Sequence) Reduce(e Env) (Node, Env) {
   }
 }
 
+func (self Sequence) Evaluate(e Env) (Node, Env) {
+  _, new_env := self.First.Evaluate(e)
+  return self.Second.Evaluate(new_env)
+}
+
 /* While */
 type While struct {
   Condition Node
@@ -314,4 +368,14 @@ func (self While) Reduceable() bool {
 
 func (self While) Reduce(e Env) (Node, Env) {
   return If{self.Condition,Sequence{self.Body,self},DoNothing{}}, e
+}
+
+func (self While) Evaluate(e Env) (Node, Env) {
+  con, _ := self.Condition.Evaluate(e)
+  if con == (Boolean{true}) {
+    _, new_env := self.Body.Evaluate(e)
+    return self.Evaluate(new_env)
+  } else {
+    return self, e
+  }
 }
