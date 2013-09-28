@@ -48,6 +48,26 @@ func (self Number) Reduce() Node {
   return self
 }
 
+/* Boolean */
+type Boolean struct {
+  Value bool
+}
+
+func (self Boolean) String() string {
+  return fmt.Sprintf("%v", self.Value)
+}
+
+func (self Boolean) Inspect() string {
+  return fmt.Sprintf("≪%v≫", self)
+}
+
+func (self Boolean) Reduceable() bool {
+  return false
+}
+
+func (self Boolean) Reduce() Node {
+  return self
+}
 
 /* Add */
 type Add struct {
@@ -97,10 +117,38 @@ func (self Multiply) Reduceable() bool {
 
 func (self Multiply) Reduce() Node {
   if self.Left.Reduceable() {
-    return Add{(self.Left.Reduce()), self.Right}
+    return Multiply{(self.Left.Reduce()), self.Right}
   } else if self.Right.Reduceable() {
-    return Add{self.Left, self.Right.Reduce()}
+    return Multiply{self.Left, self.Right.Reduce()}
   } else {
     return Number{(self.Left.(Number).Value * self.Right.(Number).Value)}
+  }
+}
+
+/* LessThan */
+type LessThan struct {
+  Left Node
+  Right Node
+}
+
+func (self LessThan) String() string {
+  return fmt.Sprintf("%v < %v", self.Left, self.Right)
+}
+
+func (self LessThan) Inspect() string {
+  return fmt.Sprintf("≪%v≫", self)
+}
+
+func (self LessThan) Reduceable() bool {
+  return true
+}
+
+func (self LessThan) Reduce() Node {
+  if self.Left.Reduceable() {
+    return LessThan{(self.Left.Reduce()), self.Right}
+  } else if self.Right.Reduceable() {
+    return LessThan{self.Left, self.Right.Reduce()}
+  } else {
+    return Boolean{(self.Left.(Number).Value < self.Right.(Number).Value)}
   }
 }

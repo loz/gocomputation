@@ -12,4 +12,9 @@ func main() {
   fmt.Println("Reduced on a Machine")
   machine := simple.Machine{example1}
   machine.Run()
+
+  fmt.Println("Booleans")
+  example2 := simple.LessThan{simple.Number{5}, simple.Add{simple.Number{2},simple.Number{2}}}
+  machine = simple.Machine{example2}
+  machine.Run()
 }
