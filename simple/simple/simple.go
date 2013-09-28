@@ -4,19 +4,22 @@ import (
   "fmt"
 )
 
+type Env map[string]Node
+
 type Node interface {
   Reduceable() bool
-  Reduce() Node
+  Reduce(Env) Node
   Inspect() string
 }
 
 /* Machine */
 type Machine struct {
   Expression Node
+  Environment Env
 }
 
 func (self *Machine) Step() {
-  self.Expression = self.Expression.Reduce()
+  self.Expression = self.Expression.Reduce(self.Environment)
 }
 
 func (self *Machine) Run() {
@@ -44,7 +47,7 @@ func (self Number) Reduceable() bool {
   return false
 }
 
-func (self Number) Reduce() Node {
+func (self Number) Reduce(e Env) Node {
   return self
 }
 
@@ -65,7 +68,7 @@ func (self Boolean) Reduceable() bool {
   return false
 }
 
-func (self Boolean) Reduce() Node {
+func (self Boolean) Reduce(e Env) Node {
   return self
 }
 
@@ -87,11 +90,11 @@ func (self Add) Reduceable() bool {
   return true
 }
 
-func (self Add) Reduce() Node {
+func (self Add) Reduce(e Env) Node {
   if self.Left.Reduceable() {
-    return Add{(self.Left.Reduce()), self.Right}
+    return Add{(self.Left.Reduce(e)), self.Right}
   } else if self.Right.Reduceable() {
-    return Add{self.Left, self.Right.Reduce()}
+    return Add{self.Left, self.Right.Reduce(e)}
   } else {
     return Number{(self.Left.(Number).Value + self.Right.(Number).Value)}
   }
@@ -115,11 +118,11 @@ func (self Multiply) Reduceable() bool {
   return true
 }
 
-func (self Multiply) Reduce() Node {
+func (self Multiply) Reduce(e Env) Node {
   if self.Left.Reduceable() {
-    return Multiply{(self.Left.Reduce()), self.Right}
+    return Multiply{(self.Left.Reduce(e)), self.Right}
   } else if self.Right.Reduceable() {
-    return Multiply{self.Left, self.Right.Reduce()}
+    return Multiply{self.Left, self.Right.Reduce(e)}
   } else {
     return Number{(self.Left.(Number).Value * self.Right.(Number).Value)}
   }
@@ -143,12 +146,33 @@ func (self LessThan) Reduceable() bool {
   return true
 }
 
-func (self LessThan) Reduce() Node {
+func (self LessThan) Reduce(e Env) Node {
   if self.Left.Reduceable() {
-    return LessThan{(self.Left.Reduce()), self.Right}
+    return LessThan{(self.Left.Reduce(e)), self.Right}
   } else if self.Right.Reduceable() {
-    return LessThan{self.Left, self.Right.Reduce()}
+    return LessThan{self.Left, self.Right.Reduce(e)}
   } else {
     return Boolean{(self.Left.(Number).Value < self.Right.(Number).Value)}
   }
+}
+
+/* Variable */
+type Variable struct {
+  Name string
+}
+
+func (self Variable) String() string {
+  return self.Name
+}
+
+func (self Variable) Inspect() string {
+  return fmt.Sprintf("≪%v≫", self)
+}
+
+func (self Variable) Reduceable() bool {
+  return true
+}
+
+func (self Variable) Reduce(environment Env) Node {
+  return environment[self.Name]
 }
